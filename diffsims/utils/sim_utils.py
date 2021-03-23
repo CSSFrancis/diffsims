@@ -25,7 +25,7 @@ import diffpy.structure
 
 from .atomic_scattering_params import ATOMIC_SCATTERING_PARAMS
 from .lobato_scattering_params import ATOMIC_SCATTERING_PARAMS_LOBATO
-
+from collections import defaultdict
 
 def get_electron_wavelength(accelerating_voltage):
     """Calculates the (relativistic) electron wavelength in Angstroms for a
@@ -73,7 +73,7 @@ def get_interaction_constant(accelerating_voltage):
     return sigma
 
 
-def get_unique_families(hkls):
+def get_unique_families(hkls, is_hex=False):
     """Returns unique families of Miller indices, which must be permutations of
     each other.
 
@@ -87,27 +87,11 @@ def get_unique_families(hkls):
     pretty_unique : dictionary
         A dict with unique hkl and multiplicity {hkl: multiplicity}.
     """
-
-    def is_perm(hkl1, hkl2):
-        h1 = np.abs(hkl1)
-        h2 = np.abs(hkl2)
-        return all([i == j for i, j in zip(sorted(h1), sorted(h2))])
-
-    unique = collections.defaultdict(list)
-    for hkl1 in hkls:
-        found = False
-        for hkl2 in unique.keys():
-            if is_perm(hkl1, hkl2):
-                found = True
-                unique[hkl2].append(hkl1)
-                break
-        if not found:
-            unique[tuple(hkl1)].append(hkl1)
-
     pretty_unique = {}
-    for k, v in unique.items():
-        pretty_unique[tuple(sorted(v)[-1])] = len(v)
-
+    if is_hex:
+        set_hkls = [set(h[:-1]) for h in hkls]
+        inv_set_hkls = [set(-h[:-1]) for h in hkls]
+        set_z = [[set(h[-1]),set(-h[-1])] for h in hkls]
     return pretty_unique
 
 
@@ -474,11 +458,18 @@ def get_intensities_params(reciprocal_lattice, reciprocal_radius):
 
     dict_i_to_d = {}
     for i, d in zip(spot_indices, spot_distances):
-        dict_i_to_d[tuple(i)] = d
+        dict_i_to_d[tuple(i)] = round(d,10)
+    res = defaultdict(list)
+    for key, val in sorted(dict_i_to_d.items()):
+        res[val].append(key)
 
-    list_hkls = spot_indices.tolist()
+    # printing result
+    print("Grouped dictionary is : " + str(dict(res)))
+    unique_hkls_dict = {}
+    for d, planes in res.items():
+        unique_hkls_dict[planes[0]]=len(planes)
 
-    unique_hkls_dict = get_unique_families(list_hkls)
+    #unique_hkls_dict = get_unique_families(list_hkls)
 
     multiplicites = np.fromiter(unique_hkls_dict.values(), dtype=float)
     unique_hkls = np.array(list(unique_hkls_dict))

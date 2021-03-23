@@ -20,6 +20,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from diffsims.pattern.detector_functions import add_shot_and_point_spread
 from diffsims.utils import mask_utils
+from diffsims.generators.zap_map_generator import generate_directional_simulations
 
 
 class DiffractionSimulation:
@@ -207,7 +208,7 @@ class DiffractionSimulation:
 
         return np.divide(pattern, np.max(pattern))
 
-    def plot(self, size_factor=1, units="real", **kwargs):
+    def plot(self, size_factor=1, units="real", ax=None, **kwargs):
         """A quick-plot function for a simulation of spots
 
         Parameters
@@ -227,7 +228,8 @@ class DiffractionSimulation:
         -----
         spot size scales with the square root of the intensity.
         """
-        _, ax = plt.subplots()
+        if ax is None:
+            _, ax = plt.subplots()
         ax.set_aspect("equal")
         if units == "pixel":
             coords = self.calibrated_coordinates
@@ -258,12 +260,14 @@ class ProfileSimulation:
         intensity.
     """
 
-    def __init__(self, magnitudes, intensities, hkls):
+    def __init__(self, magnitudes, intensities, hkl_labels, hkl, is_hex=False):
         self.magnitudes = magnitudes
         self.intensities = intensities
-        self.hkls = hkls
+        self.hkl_labels = hkl_labels
+        self.hkl = hkl
+        self.is_hex = is_hex
 
-    def get_plot(self, annotate_peaks=True, with_labels=True, fontsize=12):
+    def get_plot(self, ax=None, annotate_peaks=True, with_labels=True, fontsize=12):
         """Plots the diffraction profile simulation for the
            calculate_profile_data method in DiffractionGenerator.
 
@@ -276,16 +280,40 @@ class ProfileSimulation:
         fontsize : integer
             Fontsize for peak labels.
         """
-
-        ax = plt.gca()
-        for g, i, hkls in zip(self.magnitudes, self.intensities, self.hkls):
+        if ax is None:
+            fig, ax = plt.subplots()
+        for g, i, hkls in zip(self.magnitudes, self.intensities, self.hkl_labels):
             label = hkls
             ax.plot([g, g], [0, i], color="k", linewidth=3, label=label)
             if annotate_peaks:
-                ax.annotate(label, xy=[g, i], xytext=[g, i], fontsize=fontsize)
+                ax.annotate(label,
+                            xy=[g, i],
+                            xytext=[g, i],
+                            fontsize=fontsize,
+                            rotation=90,
+                            ha='center',
+                            va='bottom')
 
             if with_labels:
                 ax.set_xlabel("A ($^{-1}$)")
                 ax.set_ylabel("Intensities (scaled)")
 
-        return plt
+        return
+
+    def generate_directional_simulations(self,
+                                         structure,
+                                         simulator,
+                                         reciprocal_radius=1,
+                                         **kwargs):
+        if self.is_hex:
+            direction_list = [(h[0],h[1],h[3]) for h in self.hkl]
+        else:
+            direction_list = [(h[0],h[1],h[2]) for h in self.hkl]
+        print(self.hkl)
+        print(direction_list)
+        return generate_directional_simulations(structure=structure,
+                                                simulator=simulator,
+                                                direction_list=direction_list,
+                                                reciprocal_radius=reciprocal_radius,
+                                                **kwargs)
+

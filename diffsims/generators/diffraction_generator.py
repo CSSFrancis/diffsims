@@ -342,7 +342,7 @@ class DiffractionGenerator(object):
             )
         else:
             shape_factor = self.shape_factor_model(
-                excitation_error, max_excitation_error, **self.shape_factor_kwargs
+                excitation_error, max_excitation_error
             )
 
         # Calculate diffracted intensities based on a kinematical model.
@@ -408,7 +408,9 @@ class DiffractionGenerator(object):
 
         ##spot_indicies is a numpy.array of the hkls allowd in the recip radius
         g_indices, multiplicities, g_hkls = get_intensities_params(
-            recip_latt, reciprocal_radius
+            recip_latt,
+            reciprocal_radius,
+
         )
 
         i_hkl = get_kinematical_intensities(
@@ -419,16 +421,8 @@ class DiffractionGenerator(object):
             scattering_params=self.scattering_params,
             debye_waller_factors=debye_waller_factors,
         )
-
         if is_lattice_hexagonal(latt):
-            # Use Miller-Bravais indices for hexagonal lattices.
-            g_indices = (
-                g_indices[0],
-                g_indices[1],
-                -g_indices[0] - g_indices[1],
-                g_indices[2],
-            )
-
+            g_indices = [[g[0],g[1], -g[0]-g[1],g[2]] for g in g_indices]
         hkls_labels = ["".join([str(int(x)) for x in xs]) for xs in g_indices]
 
         peaks = {}
@@ -450,7 +444,11 @@ class DiffractionGenerator(object):
 
         y = np.asarray(y) / max(y) * 100
 
-        return ProfileSimulation(x, y, hkls)
+        return ProfileSimulation(x,
+                                 y,
+                                 hkls,
+                                 g_indices,
+                                 is_lattice_hexagonal(latt))
 
 
 class AtomicDiffractionGenerator:
