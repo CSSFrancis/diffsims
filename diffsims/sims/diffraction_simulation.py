@@ -273,7 +273,12 @@ class ProfileSimulation:
         self.is_hex = is_hex
         self.reflections = reflections
 
-    def get_plot(self, ax=None, annotate_peaks=True, with_labels=True, fontsize=12):
+    def get_plot(self,
+                 ax=None,
+                 annotate_peaks=True,
+                 annotate_above=None,
+                 with_labels=True,
+                 fontsize=12):
         """Plots the diffraction profile simulation for the
            calculate_profile_data method in DiffractionGenerator.
 
@@ -292,13 +297,14 @@ class ProfileSimulation:
             label = hkls
             ax.plot([g, g], [0, i], color="k", linewidth=3, label=label)
             if annotate_peaks:
-                ax.annotate(label,
-                            xy=[g, i],
-                            xytext=[g, i],
-                            fontsize=fontsize,
-                            rotation=90,
-                            ha='center',
-                            va='bottom')
+                if annotate_above is None or i> annotate_above
+                    ax.annotate(label,
+                                xy=[g, i],
+                                xytext=[g, i],
+                                fontsize=fontsize,
+                                rotation=90,
+                                ha='center',
+                                va='bottom')
 
             if with_labels:
                 ax.set_xlabel("A ($^{-1}$)")
