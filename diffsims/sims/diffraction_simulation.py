@@ -163,7 +163,7 @@ class DiffractionSimulation:
             r = radius_function(self.intensities, *args, **kwargs)
         mask = mask_utils.create_mask(shape, fill=negative)
         mask_utils.add_circles_to_mask(mask, point_coordinates_shifted, r,
-                                    fill=not negative)
+                                       fill=not negative)
         return mask
 
     def get_diffraction_pattern(self, size=512, sigma=10):
@@ -243,6 +243,10 @@ class DiffractionSimulation:
             s=size_factor * np.sqrt(self.intensities),
             **kwargs
         )
+
+        for x, y, i in zip(coords[:, 0], coords[:, 1], self.indices):
+            ax.annotate([i[0], i[1], -i[1]-i[0],i[2]], (x+0.025, y+0.05))
+
         return ax, sp
 
 
@@ -308,16 +312,15 @@ class ProfileSimulation:
                                          reciprocal_radius=1,
                                          **kwargs):
         if self.is_hex:
-            direction_list = [(h[0],h[1],h[3]) for h in self.hkl]
+            direction_list = [(h[0], h[1], h[3]) for h in self.hkl]
         else:
-            direction_list = [(h[0],h[1],h[2]) for h in self.hkl]
-        print(self.hkl)
-        print(direction_list)
+            direction_list = [(h[0], h[1], h[2]) for h in self.hkl]
         return generate_directional_simulations(structure=structure,
                                                 simulator=simulator,
                                                 direction_list=direction_list,
                                                 reciprocal_radius=reciprocal_radius,
                                                 **kwargs)
+
     def get_planes(self):
         dict_reflections = defaultdict(list)
         for ref in self.reflections:
@@ -327,10 +330,12 @@ class ProfileSimulation:
             for v1 in vectors:
                 for v2 in vectors:
                     norm_vector = tuple(np.cross(v1, v2))
-                    if not v1 in dict_planes[norm_vector]:
-                        dict_planes[tuple(np.cross(v1, v2))].append(v1)
-                    if not v2 in dict_planes[norm_vector]:
-                        dict_planes[tuple(np.cross(v1, v2))].append(v2)
-            dict_reflections[ref]=dict_planes
+                    v1prime = (v1[0], v1[1], -v1[0] - v1[1], v1[2])
+                    v2prime = (v2[0], v2[1], -v2[0] - v2[1], v2[2])
+                    if not v1prime in dict_planes[norm_vector]:
+                        dict_planes[norm_vector].append(v1prime)
+                    if not v2prime in dict_planes[norm_vector]:
+                        dict_planes[norm_vector].append(v2prime)
+            dict_reflections[ref] = dict_planes
         return dict_reflections
 

@@ -443,7 +443,6 @@ class DiffractionGenerator(object):
                 hkls.append(k)
 
         y = np.asarray(y) / max(y) * 100
-        print("ghkls ", ref)
 
         return ProfileSimulation(x,
                                  y,

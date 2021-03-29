@@ -464,7 +464,6 @@ def get_intensities_params(reciprocal_lattice, reciprocal_radius):
         res[val].append(key)
 
     # printing result
-    print("Grouped dictionary is : " + str(dict(res)))
     unique_hkls_dict = {}
     for d, planes in res.items():
         unique_hkls_dict[planes[0]]=len(planes)
