@@ -407,7 +407,7 @@ class DiffractionGenerator(object):
         )
 
         ##spot_indicies is a numpy.array of the hkls allowd in the recip radius
-        g_indices, multiplicities, g_hkls = get_intensities_params(
+        g_indices, multiplicities, g_hkls, ref = get_intensities_params(
             recip_latt,
             reciprocal_radius,
 
@@ -443,11 +443,13 @@ class DiffractionGenerator(object):
                 hkls.append(k)
 
         y = np.asarray(y) / max(y) * 100
+        print("ghkls ", ref)
 
         return ProfileSimulation(x,
                                  y,
                                  hkls,
                                  g_indices,
+                                 ref,
                                  is_lattice_hexagonal(latt))
 
 

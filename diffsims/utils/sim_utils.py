@@ -478,7 +478,7 @@ def get_intensities_params(reciprocal_lattice, reciprocal_radius):
     for unique_hkl in unique_hkls:
         g_hkls.append(dict_i_to_d[tuple(unique_hkl)])
 
-    return unique_hkls, multiplicites, g_hkls
+    return unique_hkls, multiplicites, g_hkls, res
 
 
 def get_holz_angle(electron_wavelength, lattice_parameter):

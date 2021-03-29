@@ -21,6 +21,7 @@ import numpy as np
 from diffsims.pattern.detector_functions import add_shot_and_point_spread
 from diffsims.utils import mask_utils
 from diffsims.generators.zap_map_generator import generate_directional_simulations
+from collections import defaultdict
 
 
 class DiffractionSimulation:
@@ -260,12 +261,13 @@ class ProfileSimulation:
         intensity.
     """
 
-    def __init__(self, magnitudes, intensities, hkl_labels, hkl, is_hex=False):
+    def __init__(self, magnitudes, intensities, hkl_labels, hkl,reflections, is_hex=False):
         self.magnitudes = magnitudes
         self.intensities = intensities
         self.hkl_labels = hkl_labels
         self.hkl = hkl
         self.is_hex = is_hex
+        self.reflections = reflections
 
     def get_plot(self, ax=None, annotate_peaks=True, with_labels=True, fontsize=12):
         """Plots the diffraction profile simulation for the
@@ -316,4 +318,19 @@ class ProfileSimulation:
                                                 direction_list=direction_list,
                                                 reciprocal_radius=reciprocal_radius,
                                                 **kwargs)
+    def get_planes(self):
+        dict_reflections = defaultdict(list)
+        for ref in self.reflections:
+            vectors = self.reflections[ref]
+            #all_normal_vectors = [np.cross(v1, v2) for v2 in vectors for v1 in vectors]
+            dict_planes = defaultdict(list)
+            for v1 in vectors:
+                for v2 in vectors:
+                    norm_vector = tuple(np.cross(v1, v2))
+                    if not v1 in dict_planes[norm_vector]:
+                        dict_planes[tuple(np.cross(v1, v2))].append(v1)
+                    if not v2 in dict_planes[norm_vector]:
+                        dict_planes[tuple(np.cross(v1, v2))].append(v2)
+            dict_reflections[ref]=dict_planes
+        return dict_reflections
 
