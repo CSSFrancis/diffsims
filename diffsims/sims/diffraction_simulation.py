@@ -52,6 +52,7 @@ class DiffractionSimulation:
         calibration=1.0,
         offset=(0.0, 0.0),
         with_direct_beam=False,
+        is_hex=False,
     ):
         """Initializes the DiffractionSimulation object with data values for
         the coordinates, indices, intensities, calibration and offset.
@@ -65,6 +66,7 @@ class DiffractionSimulation:
         self.calibration = calibration
         self.offset = offset
         self.with_direct_beam = with_direct_beam
+        self.is_hex = is_hex
 
     @property
     def calibrated_coordinates(self):
@@ -243,10 +245,15 @@ class DiffractionSimulation:
             s=size_factor * np.sqrt(self.intensities),
             **kwargs
         )
-
-        for x, y, i in zip(coords[:, 0], coords[:, 1], self.indices):
-            ax.annotate([i[0], i[1], -i[1]-i[0],i[2]], (x+0.025, y+0.05))
-
+        for x, y, ind in zip(coords[:, 0], coords[:, 1], self.indices):
+            if self.is_hex:
+                hex_ind = (int(ind[0]),
+                           int(ind[1]),
+                           int(-ind[0]-ind[1]),
+                           int(ind[2]))
+                ax.annotate(hex_ind, (x, y))
+            else:
+                ax.annotate(ind, (x, y))
         return ax, sp
 
 
@@ -297,7 +304,7 @@ class ProfileSimulation:
             label = hkls
             ax.plot([g, g], [0, i], color="k", linewidth=3, label=label)
             if annotate_peaks:
-                if annotate_above is None or i> annotate_above
+                if annotate_above is None or i> annotate_above:
                     ax.annotate(label,
                                 xy=[g, i],
                                 xytext=[g, i],
@@ -327,7 +334,7 @@ class ProfileSimulation:
                                                 reciprocal_radius=reciprocal_radius,
                                                 **kwargs)
 
-    def get_planes(self):
+    def get_planes(self, cart=True):
         dict_reflections = defaultdict(list)
         for ref in self.reflections:
             vectors = self.reflections[ref]
@@ -336,12 +343,17 @@ class ProfileSimulation:
             for v1 in vectors:
                 for v2 in vectors:
                     norm_vector = tuple(np.cross(v1, v2))
-                    v1prime = (v1[0], v1[1], -v1[0] - v1[1], v1[2])
-                    v2prime = (v2[0], v2[1], -v2[0] - v2[1], v2[2])
+                    if cart:
+                        v1prime = (v1[0], v1[1], -v1[0] - v1[1], v1[2])
+                        v2prime = (v2[0], v2[1], -v2[0] - v2[1], v2[2])
+                    else:
+                        v1prime = v1
+                        v2prime = v2
                     if not v1prime in dict_planes[norm_vector]:
                         dict_planes[norm_vector].append(v1prime)
                     if not v2prime in dict_planes[norm_vector]:
                         dict_planes[norm_vector].append(v2prime)
+            dict_planes.pop((0.0,0.0,0.0))
             dict_reflections[ref] = dict_planes
         return dict_reflections
 

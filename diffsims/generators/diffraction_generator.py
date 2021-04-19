@@ -248,6 +248,7 @@ class DiffractionGenerator(object):
         with_direct_beam=True,
         max_excitation_error=1e-2,
         debye_waller_factors={},
+
     ):
         """Calculates the Electron Diffraction data for a structure.
 
@@ -296,7 +297,6 @@ class DiffractionGenerator(object):
         )
         R = euler2mat(ai, aj, ak, axes="rzxz")
         cartesian_coordinates = np.matmul(R, cartesian_coordinates.T).T
-
         # Identify points intersecting the Ewald sphere within maximum
         # excitation error and store the magnitude of their excitation error.
         r_sphere = 1 / wavelength
@@ -366,6 +366,7 @@ class DiffractionGenerator(object):
             indices=g_indices,
             intensities=intensities,
             with_direct_beam=with_direct_beam,
+            is_hex=is_lattice_hexagonal(structure.lattice)
         )
 
     def calculate_profile_data(
@@ -422,7 +423,7 @@ class DiffractionGenerator(object):
             debye_waller_factors=debye_waller_factors,
         )
         if is_lattice_hexagonal(latt):
-            g_indices = [[g[0],g[1], -g[0]-g[1],g[2]] for g in g_indices]
+            g_indices = [[g[0], g[1], (-g[0]-g[1]), g[2]] for g in g_indices]
         hkls_labels = ["".join([str(int(x)) for x in xs]) for xs in g_indices]
 
         peaks = {}
