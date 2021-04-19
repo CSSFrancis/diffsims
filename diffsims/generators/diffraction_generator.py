@@ -423,7 +423,7 @@ class DiffractionGenerator(object):
             debye_waller_factors=debye_waller_factors,
         )
         if is_lattice_hexagonal(latt):
-            g_indices = [[g[0], g[1], (-g[0]-g[1]), g[2]] for g in g_indices]
+            g_indices = [[g[0], g[1], ((-1*g[0])-g[1]), g[2]] for g in g_indices]
         hkls_labels = ["".join([str(int(x)) for x in xs]) for xs in g_indices]
 
         peaks = {}
