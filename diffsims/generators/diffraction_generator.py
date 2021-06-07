@@ -543,3 +543,76 @@ class AtomicDiffractionGenerator:
         return simlib.get_diffraction_image(
             coordinates, species, probe, x, self.wavelength, precessed, **kwargs
         )
+
+    def calculate_4d_STEM(self,
+                          structure,
+                          probe,
+                          slice_thickness,
+                          probe_centre = None,
+                          probe_area=None,
+                          probe_x=10,
+                          probe_y=10,
+                          z_range=200,
+                          precessed=False,
+                          dtype="float64",
+                          ZERO=1e-14,
+                          mode="kinematic",
+                          ** kwargs,
+                          ):
+
+        species = structure.element
+        coordinates = structure.xyz_cartn.reshape(species.size, -1)
+        dim = coordinates.shape[1]  # guarenteed to be 3
+
+        if not ZERO > 0:
+            raise ValueError("The value of the ZERO argument must be greater than 0")
+
+        if probe_centre is None:
+            probe_centre = structure.xyz_cartn.reshape(-1, 3).max(0) / 2  # Centre of crystal
+        elif len(probe_centre) == (dim - 1):
+            probe_centre = np.array(list(probe_centre) + [0])
+
+        coordinates = coordinates - probe_centre[None]
+
+        if not precessed:
+            precessed = (float(0), 1)
+        elif np.isscalar(precessed):
+            precessed = (float(precessed), 30)
+
+        dtype = np.dtype(dtype)
+        dtype = round(dtype.itemsize / (1 if dtype.kind == "f" else 2))
+        dtype = "f" + str(dtype), "c" + str(2 * dtype)
+
+        # Filter list of atoms
+        for d in range(dim - 1):
+            ind = coordinates[:, d] >= self.detector[d].min() - 20
+            coordinates, species = coordinates[ind, :], species[ind]
+            ind = coordinates[:, d] <= self.detector[d].max() + 20
+            coordinates, species = coordinates[ind, :], species[ind]
+
+        # Add z-coordinate
+        z_range = max(
+            z_range, coordinates[:, -1].ptp()
+        )  # enforce minimal resolution in reciprocal space
+        x = [
+            self.detector[0],
+            self.detector[1],
+            np.arange(
+                coordinates[:, -1].min() - 20,
+                coordinates[:, -1].min() + z_range + 20,
+                slice_thickness,
+            ),
+        ]
+
+        if mode == "kinematic":
+            from diffsims.utils import kinematic_simulation_utils as simlib
+        else:
+            raise NotImplementedError(
+                "<mode> = %s is not currently supported" % repr(mode)
+            )
+
+        kwargs["dtype"] = dtype
+        kwargs["ZERO"] = ZERO
+        return simlib.get_diffraction_image(
+            coordinates, species, probe, x, self.wavelength, precessed, **kwargs
+        )
